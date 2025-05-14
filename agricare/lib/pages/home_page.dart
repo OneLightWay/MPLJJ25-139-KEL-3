@@ -1,7 +1,7 @@
-import 'package:agriplant/pages/cart_page.dart';
-import 'package:agriplant/pages/explore_page.dart';
-import 'package:agriplant/pages/profile_page.dart';
-import 'package:agriplant/pages/services_page.dart';
+import 'package:agricare/pages/cart_page.dart';
+import 'package:agricare/pages/explore_page.dart';
+import 'package:agricare/pages/profile_page.dart';
+import 'package:agricare/pages/services_page.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';

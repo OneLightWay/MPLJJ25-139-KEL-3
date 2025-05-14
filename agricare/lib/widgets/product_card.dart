@@ -1,4 +1,4 @@
-import 'package:agriplant/models/product.dart';
+import 'package:agricare/models/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_iconly/flutter_iconly.dart';
 
