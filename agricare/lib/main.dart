@@ -1,4 +1,4 @@
-import 'package:agricare/pages/home_page.dart';
+import 'package:agricare/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,7 +18,7 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.mulishTextTheme(),
       ),
-      home: const HomePage(),
+      home: const SplashScreen(),
     );
   }
 }
