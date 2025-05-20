@@ -39,7 +39,11 @@ class ProfilePage extends StatelessWidget {
                       const Positioned(
                         child: Text(
                           'Profile',
-                          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -53,37 +57,69 @@ class ProfilePage extends StatelessWidget {
             // Card Profil
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 15,
+                ),
                 child: Column(
                   children: [
                     const CircleAvatar(
                       radius: 35,
-                      backgroundImage: AssetImage('assets/images/avatars/6s.png'),
+                      backgroundImage: AssetImage(
+                        'assets/images/avatars/6s.png',
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    const Text("M. Rizal Saputra", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const Text(
+                      "M. Rizal Saputra",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    const Text("Petani", style: TextStyle(color: Colors.green, fontSize: 12)),
+                    const Text(
+                      "Petani",
+                      style: TextStyle(color: Colors.green, fontSize: 12),
+                    ),
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () {
                         // onVoucher()
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 5,
+                          horizontal: 15,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          border: Border.all(color: const Color(0xFF2ABA66), width: 2),
+                          border: Border.all(
+                            color: const Color(0xFF2ABA66),
+                            width: 2,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            FaIcon(FontAwesomeIcons.star, size: 14, color: Color(0xFF2ABA66)),
+                            FaIcon(
+                              FontAwesomeIcons.star,
+                              size: 14,
+                              color: Color(0xFF2ABA66),
+                            ),
                             SizedBox(width: 6),
-                            Text("Poin : 0", style: TextStyle(fontSize: 12, color: Color(0xFF2ABA66))),
+                            Text(
+                              "Poin : 0",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF2ABA66),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -101,31 +137,77 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Akun", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    "Akun",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 10),
-                  _buildMenuItem(context, "Edit Profil", Icons.edit, onTap: () {
-                    // Navigator.push...
-                  }),
-                  _buildMenuItem(context, "Sahabat Tani", Icons.group, onTap: () {}),
-                  _buildMenuItem(context, "Pilih Bahasa", Icons.language, onTap: () {}),
+                  _buildMenuItem(
+                    context,
+                    "Edit Profil",
+                    Icons.edit,
+                    onTap: () {
+                      // Navigator.push...
+                    },
+                  ),
+                  // _buildMenuItem(context, "Sahabat Tani", Icons.group, onTap: () {}),
+                  _buildMenuItem(
+                    context,
+                    "Pilih Bahasa",
+                    Icons.language,
+                    onTap: () {},
+                  ),
                   const SizedBox(height: 10),
-                  const Text("Keamanan dan Data", style: TextStyle(fontWeight: FontWeight.bold)),
-                  _buildMenuItem(context, "Ubah Password", Icons.lock, onTap: () {}),
-                  _buildMenuItem(context, "Perbarui Data", Icons.refresh, onTap: () {}),
-                  _buildMenuItem(context, "Version (v1.0.0) Check Update", Icons.system_update, onTap: () {}),
+                  const Text(
+                    "Keamanan dan Data",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    "Ubah Password",
+                    Icons.lock,
+                    onTap: () {},
+                  ),
+                  _buildMenuItem(
+                    context,
+                    "Perbarui Data",
+                    Icons.refresh,
+                    onTap: () {},
+                  ),
+                  _buildMenuItem(
+                    context,
+                    "Version (v1.0.0) Check Update",
+                    Icons.system_update,
+                    onTap: () {},
+                  ),
                   const SizedBox(height: 10),
-                  const Text("Panduan", style: TextStyle(fontWeight: FontWeight.bold)),
-                  _buildMenuItem(context, "Lihat Panduan", Icons.help, onTap: () {}),
+                  const Text(
+                    "Panduan",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    "Lihat Panduan",
+                    Icons.help,
+                    onTap: () {},
+                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       // onLogout()
                     },
-                    child: const Center(child: Text("Logout", style: TextStyle(color: Colors.white))),
+                    child: const Center(
+                      child: Text(
+                        "Logout",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -138,7 +220,12 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, String title, IconData icon, {void Function()? onTap}) {
+  Widget _buildMenuItem(
+    BuildContext context,
+    String title,
+    IconData icon, {
+    void Function()? onTap,
+  }) {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,

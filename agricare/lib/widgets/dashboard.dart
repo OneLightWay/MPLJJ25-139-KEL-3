@@ -7,21 +7,22 @@ class DashboardMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-      child: 
+      child:
       // Grid.view ika  ingin selalu 3 kolom tidak peduli ukuran layar
       GridView.count(
         crossAxisCount: 3,
         shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(), // agar tidak konflik dengan scroll luar
+        physics:
+            NeverScrollableScrollPhysics(), // agar tidak konflik dengan scroll luar
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         mainAxisSpacing: 15,
         crossAxisSpacing: 15,
-      
-      //Wrap akan otomatis membuat 3 item per baris jika lebar layar cukup dan width: 105
-      // Wrap(
-      //   spacing: 10, // Jarak horizontal antar item
-      //   runSpacing: 10, // Jarak vertikal antar baris
-      //   alignment: WrapAlignment.center, // Biar item ditengah
+
+        //Wrap akan otomatis membuat 3 item per baris jika lebar layar cukup dan width: 105
+        // Wrap(
+        //   spacing: 10, // Jarak horizontal antar item
+        //   runSpacing: 10, // Jarak vertikal antar baris
+        //   alignment: WrapAlignment.center, // Biar item ditengah
         children: [
           dashboardItem(
             image: 'assets/images/dashboard/cuaca.png',
@@ -38,11 +39,11 @@ class DashboardMenu extends StatelessWidget {
             title: 'Lahan Anda',
             onTap: () => onPage(context, 'lokasi-lahan'),
           ),
-          dashboardItem(
-            image: 'assets/images/dashboard/jagung-informasi-syngenta.png',
-            title: 'Budidaya',
-            onTap: () => onPage(context, 'budidaya'),
-          ),
+          // dashboardItem(
+          //   image: 'assets/images/dashboard/jagung-informasi-syngenta.png',
+          //   title: 'Budidaya',
+          //   onTap: () => onPage(context, 'budidaya'),
+          // ),
           // dashboardItem(
           //   image: 'assets/images/dashboard/rekom-produk.png',
           //   title: 'Rekomendasi Produk',
@@ -162,8 +163,8 @@ class DashboardMenu extends StatelessWidget {
 
   void onPage(BuildContext context, String page) {
     // TODO: Navigasi ke halaman yang sesuai
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Navigasi ke: $page')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Navigasi ke: $page')));
   }
 }
