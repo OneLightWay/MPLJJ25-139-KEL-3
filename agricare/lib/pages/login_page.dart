@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../pages/onboarding_page.dart';
+import 'home_page.dart';
+import 'register_page.dart';
 
 void main() => runApp(const LoginPage());
 
@@ -33,7 +34,7 @@ class LoginPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset('assets/logologin.png', width: 240),
+                  Image.asset('assets/images/logologin.png', width: 240),
                   const SizedBox(height: 30),
                   const Text(
                     'Silahkan masuk menggunakan akun\nyang telah Anda buat',
@@ -60,7 +61,7 @@ class LoginPage extends StatelessWidget {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const OnboardingPage()),
+                          MaterialPageRoute(builder: (context) => const HomePage()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -88,7 +89,11 @@ class LoginPage extends StatelessWidget {
                         style: TextStyle(fontSize: 16, color: Color(0xFF666666)),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const RegisterPage()),
+                        );},
                         child: const Text(
                           'Daftar akun',
                           style: TextStyle(
