@@ -1,52 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final DatabaseReference dbRef = FirebaseDatabase.instance.ref("wilayah");
+
   String? selectedProvince;
   String? selectedCity;
   String? selectedDistrict;
   String? selectedSubdistrict;
 
-  final Map<String, Map<String, Map<String, List<String>>>> wilayah = {
-    'Jawa Barat': {
-      'Bandung': {
-        'Coblong': ['Dago', 'Lebak Gede'],
-        'Sukajadi': ['Pasteur', 'Sukagalih'],
-      },
-      'Bekasi': {
-        'Bekasi Timur': ['Duren Jaya', 'Aren Jaya'],
-        'Bekasi Barat': ['Bintara', 'Kranji'],
-      },
-    },
-    'DKI Jakarta': {
-      'Jakarta Selatan': {
-        'Kebayoran Baru': ['Gandaria', 'Senayan'],
-        'Pasar Minggu': ['Pejaten', 'Ragunan'],
-      },
-    },
-  };
+  List<Map<String, String>> provinces = [];
+  List<Map<String, String>> cities = [];
+  List<Map<String, String>> districts = [];
+  List<Map<String, String>> subdistricts = [];
 
-  List<String> get cities =>
-      selectedProvince != null ? wilayah[selectedProvince!]!.keys.toList() : [];
+  @override
+  void initState() {
+    super.initState();
+    fetchProvinces();
+  }
 
-  List<String> get districts =>
-      selectedProvince != null && selectedCity != null
-          ? wilayah[selectedProvince!]![selectedCity!]!.keys.toList()
-          : [];
+  Future<void> fetchProvinces() async {
+    final snapshot = await dbRef.child('provinsi').get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      final List<Map<String, String>> provList = [];
+      data.forEach((key, value) {
+        final val = Map<String, dynamic>.from(value);
+        provList.add({'id': val['id'], 'name': val['name']});
+      });
+      setState(() {
+        provinces = provList;
+      });
+    }
+  }
 
-  List<String> get subdistricts =>
-      selectedProvince != null &&
-              selectedCity != null &&
-              selectedDistrict != null
-          ? wilayah[selectedProvince!]![selectedCity!]![selectedDistrict!]!
-          : [];
+  Future<void> fetchCities(String provinceId) async {
+    final snapshot =
+        await dbRef
+            .child('kabupaten_kota')
+            .orderByChild('id_provinsi')
+            .equalTo(provinceId)
+            .get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      final List<Map<String, String>> cityList = [];
+      data.forEach((key, value) {
+        final val = Map<String, dynamic>.from(value);
+        cityList.add({'id': val['id'], 'name': val['name']});
+      });
+      setState(() {
+        cities = cityList;
+      });
+    }
+  }
+
+  Future<void> fetchDistricts(String cityId) async {
+    final snapshot =
+        await dbRef
+            .child('kecamatan')
+            .orderByChild('id_kabupaten_kota')
+            .equalTo(cityId)
+            .get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      final List<Map<String, String>> distList = [];
+      data.forEach((key, value) {
+        final val = Map<String, dynamic>.from(value);
+        distList.add({'id': val['id'], 'name': val['name']});
+      });
+      setState(() {
+        districts = distList;
+      });
+    }
+  }
+
+  Future<void> fetchSubdistricts(String districtId) async {
+    final snapshot =
+        await dbRef
+            .child('desa_kelurahan')
+            .orderByChild('id_kecamatan')
+            .equalTo(districtId)
+            .get();
+    if (snapshot.exists) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      final List<Map<String, String>> subList = [];
+      data.forEach((key, value) {
+        final val = Map<String, dynamic>.from(value);
+        subList.add({'id': val['id'], 'name': val['name']});
+      });
+      setState(() {
+        subdistricts = subList;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +126,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 20),
                 const Text(
                   "Daftar Akun",
-                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -108,8 +162,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     border: OutlineInputBorder(),
                   ),
                   items:
-                      wilayah.keys.map((prov) {
-                        return DropdownMenuItem(value: prov, child: Text(prov));
+                      provinces.map((prov) {
+                        return DropdownMenuItem(
+                          value: prov['id'],
+                          child: Text(prov['name']!),
+                        );
                       }).toList(),
                   onChanged: (val) {
                     setState(() {
@@ -117,12 +174,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       selectedCity = null;
                       selectedDistrict = null;
                       selectedSubdistrict = null;
+                      cities = [];
+                      districts = [];
+                      subdistricts = [];
                     });
+                    if (val != null) fetchCities(val);
                   },
                 ),
                 const SizedBox(height: 12),
 
-                // Dropdown Kota/Kabupaten
+                // Dropdown Kota
                 DropdownButtonFormField<String>(
                   value: selectedCity,
                   hint: const Text("Pilih Kab./Kota"),
@@ -131,14 +192,20 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   items:
                       cities.map((city) {
-                        return DropdownMenuItem(value: city, child: Text(city));
+                        return DropdownMenuItem(
+                          value: city['id'],
+                          child: Text(city['name']!),
+                        );
                       }).toList(),
                   onChanged: (val) {
                     setState(() {
                       selectedCity = val;
                       selectedDistrict = null;
                       selectedSubdistrict = null;
+                      districts = [];
+                      subdistricts = [];
                     });
+                    if (val != null) fetchDistricts(val);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -152,13 +219,18 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   items:
                       districts.map((dist) {
-                        return DropdownMenuItem(value: dist, child: Text(dist));
+                        return DropdownMenuItem(
+                          value: dist['id'],
+                          child: Text(dist['name']!),
+                        );
                       }).toList(),
                   onChanged: (val) {
                     setState(() {
                       selectedDistrict = val;
                       selectedSubdistrict = null;
+                      subdistricts = [];
                     });
+                    if (val != null) fetchSubdistricts(val);
                   },
                 ),
                 const SizedBox(height: 12),
@@ -172,24 +244,28 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   items:
                       subdistricts.map((sub) {
-                        return DropdownMenuItem(value: sub, child: Text(sub));
+                        return DropdownMenuItem(
+                          value: sub['id'],
+                          child: Text(sub['name']!),
+                        );
                       }).toList(),
                   onChanged: (val) {
-                    setState(() => selectedSubdistrict = val);
+                    setState(() {
+                      selectedSubdistrict = val;
+                    });
                   },
                 ),
                 const SizedBox(height: 24),
 
+                // Tombol Daftar
                 SizedBox(
                   width: double.infinity,
                   height: 45,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Validasi & navigasi ke halaman berikutnya
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Registrasi berhasil!")),
                       );
-                      // Setelah validasi sukses
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -214,6 +290,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -256,11 +333,11 @@ class CustomInputField extends StatelessWidget {
   final bool obscureText;
 
   const CustomInputField({
-    Key? key,
+    super.key,
     required this.icon,
     required this.hintText,
     this.obscureText = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
