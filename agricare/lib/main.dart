@@ -3,9 +3,11 @@ import 'pages/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
   await Firebase.initializeApp(
     // options: DefaultFirebaseOptions.currentPlatform,
     options: FirebaseOptions(
