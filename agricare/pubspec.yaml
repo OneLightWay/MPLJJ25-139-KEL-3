@@ -67,6 +67,7 @@ flutter:
     - assets/images/informasi/
     - assets/images/icons/
     - assets/images/
+    - assets/images/weather/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

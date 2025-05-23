@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:agricare/pages/cuaca_page.dart';
 
 class DashboardMenu extends StatelessWidget {
   const DashboardMenu({super.key});
@@ -27,17 +28,17 @@ class DashboardMenu extends StatelessWidget {
           dashboardItem(
             image: 'assets/images/dashboard/cuaca.png',
             title: 'Cuaca',
-            onTap: () => onPage(context, 'cuaca'),
+            onTap: () => onPage(context, CuacaPage()),
           ),
           dashboardItem(
             image: 'assets/images/dashboard/jadwal-tanam.png',
             title: 'Jadwal Tanam',
-            onTap: () => onPage(context, 'jadwal-kalendar'),
+            onTap: () => onPage(context, CuacaPage()),
           ),
           dashboardItem(
             image: 'assets/images/dashboard/lokasi-lahan.png',
             title: 'Lahan Anda',
-            onTap: () => onPage(context, 'lokasi-lahan'),
+            onTap: () => onPage(context, CuacaPage()),
           ),
           // dashboardItem(
           //   image: 'assets/images/dashboard/jagung-informasi-syngenta.png',
@@ -161,10 +162,10 @@ class DashboardMenu extends StatelessWidget {
     );
   }
 
-  void onPage(BuildContext context, String page) {
-    // TODO: Navigasi ke halaman yang sesuai
-    ScaffoldMessenger.of(
+  void onPage(BuildContext context, Widget page) {
+    Navigator.push(
       context,
-    ).showSnackBar(SnackBar(content: Text('Navigasi ke: $page')));
+      MaterialPageRoute(builder: (context) => page),
+    );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:agricare/pages/register_page.dart';
 import 'package:flutter/material.dart';
 import 'pages/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,7 +32,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.mulishTextTheme(),
       ),
-      home: const RegisterPage(), // pastikan HomePage() ada
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
