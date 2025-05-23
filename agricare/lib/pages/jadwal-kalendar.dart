@@ -32,8 +32,9 @@ class _JadwalTanamPageState extends State<JadwalTanamPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Jadwal Tanam'),
+        title: Text('Jadwal Tanam', style: TextStyle(color: Colors.white)),
         leading: BackButton(
+          color: Colors.white,
           onPressed: () {
             Navigator.pushReplacement(
               context,
