@@ -1,6 +1,7 @@
 import 'package:agricare/pages/lokasi-lahan.dart';
 import 'package:flutter/material.dart';
 import 'package:agricare/pages/cuaca_page.dart';
+import 'package:agricare/pages/jadwal-kalendar.dart';
 
 class DashboardMenu extends StatelessWidget {
   const DashboardMenu({super.key});
@@ -34,7 +35,7 @@ class DashboardMenu extends StatelessWidget {
           dashboardItem(
             image: 'assets/images/dashboard/jadwal-tanam.png',
             title: 'Jadwal Tanam',
-            onTap: () => onPage(context, CuacaPage()),
+            onTap: () => onPage(context, JadwalTanamPage()),
           ),
           dashboardItem(
             image: 'assets/images/dashboard/lokasi-lahan.png',

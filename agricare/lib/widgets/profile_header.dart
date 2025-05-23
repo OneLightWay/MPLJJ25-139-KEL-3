@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:agricare/pages/home_page.dart'; // pastikan import HomePage di sini
 
 class ProfileHeader extends StatelessWidget {
@@ -18,7 +18,8 @@ class ProfileHeader extends StatelessWidget {
       children: [
         // Gradient background
         Container(
-          height: 180,
+          // 180 pakai poin dan sahabat tani
+          height: 100,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Colors.green, Colors.greenAccent],
@@ -31,7 +32,8 @@ class ProfileHeader extends StatelessWidget {
 
         // Overlay gelap
         Container(
-          height: 180,
+          // 180 pakai poin dan sahabat tani
+          height: 100,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.15),
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(13)),
@@ -61,33 +63,33 @@ class ProfileHeader extends StatelessWidget {
                       'Petani',
                       style: TextStyle(fontSize: 12, color: Colors.white),
                     ),
-                    const SizedBox(height: 10),
+                    // const SizedBox(height: 10),
 
-                    InkWell(
-                      onTap: () => _navigateToHome(context),
-                      child: Row(
-                        children: const [
-                          FaIcon(FontAwesomeIcons.star, size: 14, color: Colors.white),
-                          SizedBox(width: 5),
-                          Text('Poin', style: TextStyle(fontSize: 14, color: Colors.white)),
-                          SizedBox(width: 5),
-                          Icon(Icons.chevron_right, color: Colors.white, size: 16),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => _navigateToHome(context),
-                      child: Row(
-                        children: const [
-                          FaIcon(FontAwesomeIcons.userGroup, size: 14, color: Colors.white),
-                          SizedBox(width: 5),
-                          Text('Sahabat Tani', style: TextStyle(fontSize: 14, color: Colors.white)),
-                          SizedBox(width: 5),
-                          Icon(Icons.chevron_right, color: Colors.white, size: 16),
-                        ],
-                      ),
-                    ),
+                    // InkWell(
+                    //   onTap: () => _navigateToHome(context),
+                    //   child: Row(
+                    //     children: const [
+                    //       FaIcon(FontAwesomeIcons.star, size: 14, color: Colors.white),
+                    //       SizedBox(width: 5),
+                    //       Text('Poin', style: TextStyle(fontSize: 14, color: Colors.white)),
+                    //       SizedBox(width: 5),
+                    //       Icon(Icons.chevron_right, color: Colors.white, size: 16),
+                    //     ],
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 8),
+                    // InkWell(
+                    //   onTap: () => _navigateToHome(context),
+                    //   child: Row(
+                    //     children: const [
+                    //       FaIcon(FontAwesomeIcons.userGroup, size: 14, color: Colors.white),
+                    //       SizedBox(width: 5),
+                    //       Text('Sahabat Tani', style: TextStyle(fontSize: 14, color: Colors.white)),
+                    //       SizedBox(width: 5),
+                    //       Icon(Icons.chevron_right, color: Colors.white, size: 16),
+                    //     ],
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
