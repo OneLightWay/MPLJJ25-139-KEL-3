@@ -1,3 +1,4 @@
+import 'package:agricare/pages/lokasi-lahan.dart';
 import 'package:flutter/material.dart';
 import 'package:agricare/pages/cuaca_page.dart';
 
@@ -38,7 +39,7 @@ class DashboardMenu extends StatelessWidget {
           dashboardItem(
             image: 'assets/images/dashboard/lokasi-lahan.png',
             title: 'Lahan Anda',
-            onTap: () => onPage(context, CuacaPage()),
+            onTap: () => onPage(context, LahanPage()),
           ),
           // dashboardItem(
           //   image: 'assets/images/dashboard/jagung-informasi-syngenta.png',
