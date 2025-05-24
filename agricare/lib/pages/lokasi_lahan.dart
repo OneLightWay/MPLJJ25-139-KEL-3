@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
-import 'lokasi-lahan-detail.dart';
-import 'lokasi-lahan-tambah.dart';
+import 'lokasi_lahan_detail.dart';
+import 'lokasi_lahan_tambah.dart';
 
 class LahanPage extends StatelessWidget {
   const LahanPage({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'lokasi-lahan-detail.dart';
+import 'lokasi_lahan_detail.dart';
 
 class EditLokasiLahanPage extends StatefulWidget {
   @override

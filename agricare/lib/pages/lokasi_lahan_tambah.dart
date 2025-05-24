@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'lokasi-lahan.dart';
+import 'lokasi_lahan.dart';
 
 class LahanTambahPage extends StatefulWidget {
   const LahanTambahPage({super.key});

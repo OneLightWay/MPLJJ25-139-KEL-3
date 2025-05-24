@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'login_page.dart';
+
+bool isValidEmail(String email) {
+  final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  return emailRegex.hasMatch(email);
+}
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,17 +16,29 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final _auth = FirebaseAuth.instance;
   final DatabaseReference dbRef = FirebaseDatabase.instance.ref("wilayah");
 
+  // Controllers
+  final TextEditingController _namaController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _alamatController = TextEditingController();
+  final TextEditingController _teleponController = TextEditingController();
+
+  // Lokasi
   String? selectedProvince;
   String? selectedCity;
   String? selectedDistrict;
   String? selectedSubdistrict;
 
-  List<Map<String, String>> provinces = [];
-  List<Map<String, String>> cities = [];
-  List<Map<String, String>> districts = [];
-  List<Map<String, String>> subdistricts = [];
+  List<Map<String, dynamic>> provinces = [];
+  List<Map<String, dynamic>> cities = [];
+  List<Map<String, dynamic>> districts = [];
+  List<Map<String, dynamic>> subdistricts = [];
+
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -28,38 +46,35 @@ class _RegisterPageState extends State<RegisterPage> {
     fetchProvinces();
   }
 
+  // Ambil data lokasi dari Firebase Realtime Database
   Future<void> fetchProvinces() async {
     final snapshot = await dbRef.child('provinsi').get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, String>> provList = [];
-      data.forEach((key, value) {
-        final val = Map<String, dynamic>.from(value);
-        provList.add({'id': val['id'], 'name': val['name']});
-      });
-      setState(() {
-        provinces = provList;
-      });
+      final provList =
+          data.entries.map((e) {
+            final val = Map<String, dynamic>.from(e.value);
+            return {'id': val['id'], 'name': val['name']};
+          }).toList();
+      setState(() => provinces = provList);
     }
   }
 
-  Future<void> fetchCities(String provinceId) async {
+  Future<void> fetchCities(String provId) async {
     final snapshot =
         await dbRef
             .child('kabupaten_kota')
             .orderByChild('id_provinsi')
-            .equalTo(provinceId)
+            .equalTo(provId)
             .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, String>> cityList = [];
-      data.forEach((key, value) {
-        final val = Map<String, dynamic>.from(value);
-        cityList.add({'id': val['id'], 'name': val['name']});
-      });
-      setState(() {
-        cities = cityList;
-      });
+      final cityList =
+          data.entries.map((e) {
+            final val = Map<String, dynamic>.from(e.value);
+            return {'id': val['id'], 'name': val['name']};
+          }).toList();
+      setState(() => cities = cityList);
     }
   }
 
@@ -72,14 +87,12 @@ class _RegisterPageState extends State<RegisterPage> {
             .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, String>> distList = [];
-      data.forEach((key, value) {
-        final val = Map<String, dynamic>.from(value);
-        distList.add({'id': val['id'], 'name': val['name']});
-      });
-      setState(() {
-        districts = distList;
-      });
+      final districtList =
+          data.entries.map((e) {
+            final val = Map<String, dynamic>.from(e.value);
+            return {'id': val['id'], 'name': val['name']};
+          }).toList();
+      setState(() => districts = districtList);
     }
   }
 
@@ -92,14 +105,82 @@ class _RegisterPageState extends State<RegisterPage> {
             .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, String>> subList = [];
-      data.forEach((key, value) {
-        final val = Map<String, dynamic>.from(value);
-        subList.add({'id': val['id'], 'name': val['name']});
-      });
+      final subList =
+          data.entries.map((e) {
+            final val = Map<String, dynamic>.from(e.value);
+            return {'id': val['id'], 'name': val['name']};
+          }).toList();
+      setState(() => subdistricts = subList);
+    }
+  }
+
+  Future<void> _register() async {
+    if (_namaController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.length < 6 ||
+        selectedProvince == null ||
+        selectedCity == null ||
+        selectedDistrict == null ||
+        selectedSubdistrict == null) {
       setState(() {
-        subdistricts = subList;
+        _errorMessage = "Mohon isi semua data dengan benar.";
       });
+      return;
+    }
+
+    if (!isValidEmail(_emailController.text.trim())) {
+      setState(() {
+        _errorMessage = "Email tidak valid.";
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      
+      await credential.user!.sendEmailVerification();
+
+      // Tambahan: simpan info user ke Firebase Realtime Database (opsional)
+      await FirebaseDatabase.instance.ref("users/${credential.user!.uid}").set({
+        "nama": _namaController.text.trim(),
+        "email": _emailController.text.trim(),
+        "alamat": _alamatController.text.trim(),
+        "telepon": _teleponController.text.trim(),
+        "provinsi_id": selectedProvince,
+        "kabupaten_id": selectedCity,
+        "kecamatan_id": selectedDistrict,
+        "kelurahan_id": selectedSubdistrict,
+        "provinsi":
+            provinces.firstWhere((e) => e['id'] == selectedProvince)['name'],
+        "kabupaten": cities.firstWhere((e) => e['id'] == selectedCity)['name'],
+        "kecamatan":
+            districts.firstWhere((e) => e['id'] == selectedDistrict)['name'],
+        "kelurahan":
+            subdistricts.firstWhere(
+              (e) => e['id'] == selectedSubdistrict,
+            )['name'],
+      });
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      print('FirebaseAuthException: ${e.code} - ${e.message}');
+      setState(() => _errorMessage = e.message);
+    } catch (e) {
+      print('Other exception: $e');
+      setState(() => _errorMessage = 'Terjadi kesalahan. Coba lagi.');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -107,14 +188,12 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
+            colors: [Colors.white, Color(0xFF2EC83D)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFFFFFFF), Color(0xFF2EC83D)],
-            stops: [0.0, 1.0],
+            stops: [0, 1],
             transform: GradientRotation(2.93),
           ),
         ),
@@ -126,187 +205,139 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 20),
                 const Text(
                   "Daftar Akun",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E2E2E),
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                const CustomInputField(
+                CustomInputField(
+                  controller: _namaController,
                   icon: Icons.person,
                   hintText: 'Nama Lengkap',
                 ),
                 const SizedBox(height: 12),
-                const CustomInputField(icon: Icons.email, hintText: 'Email'),
+                CustomInputField(
+                  controller: _emailController,
+                  icon: Icons.email,
+                  hintText: 'Email',
+                ),
                 const SizedBox(height: 12),
-                const CustomInputField(
+                CustomInputField(
+                  controller: _passwordController,
                   icon: Icons.lock,
                   hintText: 'Password',
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
-                const CustomInputField(icon: Icons.home, hintText: 'Alamat'),
+                CustomInputField(
+                  controller: _alamatController,
+                  icon: Icons.home,
+                  hintText: 'Alamat',
+                ),
                 const SizedBox(height: 12),
-                const CustomInputField(
+                CustomInputField(
+                  controller: _teleponController,
                   icon: Icons.phone,
                   hintText: 'No. Telepon',
                 ),
                 const SizedBox(height: 16),
 
-                // Dropdown Provinsi
-                DropdownButtonFormField<String>(
-                  value: selectedProvince,
-                  hint: const Text("Pilih Provinsi"),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items:
-                      provinces.map((prov) {
-                        return DropdownMenuItem(
-                          value: prov['id'],
-                          child: Text(prov['name']!),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedProvince = val;
-                      selectedCity = null;
-                      selectedDistrict = null;
-                      selectedSubdistrict = null;
-                      cities = [];
-                      districts = [];
-                      subdistricts = [];
-                    });
-                    if (val != null) fetchCities(val);
-                  },
-                ),
+                // Dropdown lokasi
+                _buildDropdown("Pilih Provinsi", provinces, selectedProvince, (
+                  val,
+                ) {
+                  setState(() {
+                    selectedProvince = val;
+                    selectedCity = null;
+                    selectedDistrict = null;
+                    selectedSubdistrict = null;
+                    cities = [];
+                    districts = [];
+                    subdistricts = [];
+                  });
+                  if (val != null) fetchCities(val);
+                }),
                 const SizedBox(height: 12),
-
-                // Dropdown Kota
-                DropdownButtonFormField<String>(
-                  value: selectedCity,
-                  hint: const Text("Pilih Kab./Kota"),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items:
-                      cities.map((city) {
-                        return DropdownMenuItem(
-                          value: city['id'],
-                          child: Text(city['name']!),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedCity = val;
-                      selectedDistrict = null;
-                      selectedSubdistrict = null;
-                      districts = [];
-                      subdistricts = [];
-                    });
-                    if (val != null) fetchDistricts(val);
-                  },
-                ),
+                _buildDropdown("Pilih Kab./Kota", cities, selectedCity, (val) {
+                  setState(() {
+                    selectedCity = val;
+                    selectedDistrict = null;
+                    selectedSubdistrict = null;
+                    districts = [];
+                    subdistricts = [];
+                  });
+                  if (val != null) fetchDistricts(val);
+                }),
                 const SizedBox(height: 12),
-
-                // Dropdown Kecamatan
-                DropdownButtonFormField<String>(
-                  value: selectedDistrict,
-                  hint: const Text("Pilih Kecamatan"),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items:
-                      districts.map((dist) {
-                        return DropdownMenuItem(
-                          value: dist['id'],
-                          child: Text(dist['name']!),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedDistrict = val;
-                      selectedSubdistrict = null;
-                      subdistricts = [];
-                    });
-                    if (val != null) fetchSubdistricts(val);
-                  },
-                ),
+                _buildDropdown("Pilih Kecamatan", districts, selectedDistrict, (
+                  val,
+                ) {
+                  setState(() {
+                    selectedDistrict = val;
+                    selectedSubdistrict = null;
+                    subdistricts = [];
+                  });
+                  if (val != null) fetchSubdistricts(val);
+                }),
                 const SizedBox(height: 12),
-
-                // Dropdown Kelurahan
-                DropdownButtonFormField<String>(
-                  value: selectedSubdistrict,
-                  hint: const Text("Pilih Kelurahan"),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                  items:
-                      subdistricts.map((sub) {
-                        return DropdownMenuItem(
-                          value: sub['id'],
-                          child: Text(sub['name']!),
-                        );
-                      }).toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedSubdistrict = val;
-                    });
+                _buildDropdown(
+                  "Pilih Kelurahan",
+                  subdistricts,
+                  selectedSubdistrict,
+                  (val) {
+                    setState(() => selectedSubdistrict = val);
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Tombol Daftar
+                if (_errorMessage != null)
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   height: 45,
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Registrasi berhasil!")),
-                      );
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2EC83D),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : const Text(
+                              'Daftar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                   ),
                 ),
-                const SizedBox(height: 20),
 
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
                       'Sudah punya akun?',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF666666)),
+                      style: TextStyle(fontSize: 16),
                     ),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
+                      onPressed:
+                          () => Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
                           ),
-                        );
-                      },
                       child: const Text(
                         'Masuk Disini',
                         style: TextStyle(
@@ -325,17 +356,42 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+
+  Widget _buildDropdown(
+    String hint,
+    List<Map<String, dynamic>> items,
+    String? selectedValue,
+    ValueChanged<String?> onChanged,
+  ) {
+    return DropdownButtonFormField<String>(
+      value: selectedValue,
+      hint: Text(hint),
+      decoration: const InputDecoration(border: OutlineInputBorder()),
+      items:
+          items
+              .map(
+                (item) => DropdownMenuItem<String>(
+                  value: item['id'],
+                  child: Text(item['name']!),
+                ),
+              )
+              .toList(),
+      onChanged: onChanged,
+    );
+  }
 }
 
 class CustomInputField extends StatelessWidget {
   final IconData icon;
   final String hintText;
+  final TextEditingController controller;
   final bool obscureText;
 
   const CustomInputField({
     super.key,
     required this.icon,
     required this.hintText,
+    required this.controller,
     this.obscureText = false,
   });
 
@@ -349,6 +405,7 @@ class CustomInputField extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
         decoration: InputDecoration(
           icon: Icon(icon, color: const Color(0xFF8C8C91)),
