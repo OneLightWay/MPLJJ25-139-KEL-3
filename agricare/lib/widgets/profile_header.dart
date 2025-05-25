@@ -1,9 +1,43 @@
 import 'package:flutter/material.dart';
 // import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:agricare/pages/home_page.dart'; // pastikan import HomePage di sini
+import 'package:agricare/pages/home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class ProfileHeader extends StatelessWidget {
+class ProfileHeader extends StatefulWidget {
   const ProfileHeader({super.key});
+
+  @override
+  State<ProfileHeader> createState() => _ProfileHeaderState();
+}
+
+class _ProfileHeaderState extends State<ProfileHeader> {
+  String _namaPengguna = 'Memuat...';
+
+  @override
+  void initState() {
+    super.initState();
+    _ambilNamaDariDatabase();
+  }
+
+  Future<void> _ambilNamaDariDatabase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final uid = user.uid;
+    final ref = FirebaseDatabase.instance.ref("users/$uid/nama");
+    final snapshot = await ref.get();
+
+    if (snapshot.exists) {
+      setState(() {
+        _namaPengguna = snapshot.value.toString();
+      });
+    } else {
+      setState(() {
+        _namaPengguna = 'Tidak ditemukan';
+      });
+    }
+  }
 
   void _navigateToHome(BuildContext context) {
     Navigator.push(
@@ -16,9 +50,7 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Gradient background
         Container(
-          // 180 pakai poin dan sahabat tani
           height: 100,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -29,30 +61,24 @@ class ProfileHeader extends StatelessWidget {
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(13)),
           ),
         ),
-
-        // Overlay gelap
         Container(
-          // 180 pakai poin dan sahabat tani
           height: 100,
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.15),
             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(13)),
           ),
         ),
-
-        // Konten profile
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: Row(
             children: [
-              // Kolom kiri
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'M.Rizal Saputra',
-                      style: TextStyle(
+                    Text(
+                      _namaPengguna,
+                      style: const TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -63,38 +89,9 @@ class ProfileHeader extends StatelessWidget {
                       'Petani',
                       style: TextStyle(fontSize: 12, color: Colors.white),
                     ),
-                    // const SizedBox(height: 10),
-
-                    // InkWell(
-                    //   onTap: () => _navigateToHome(context),
-                    //   child: Row(
-                    //     children: const [
-                    //       FaIcon(FontAwesomeIcons.star, size: 14, color: Colors.white),
-                    //       SizedBox(width: 5),
-                    //       Text('Poin', style: TextStyle(fontSize: 14, color: Colors.white)),
-                    //       SizedBox(width: 5),
-                    //       Icon(Icons.chevron_right, color: Colors.white, size: 16),
-                    //     ],
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 8),
-                    // InkWell(
-                    //   onTap: () => _navigateToHome(context),
-                    //   child: Row(
-                    //     children: const [
-                    //       FaIcon(FontAwesomeIcons.userGroup, size: 14, color: Colors.white),
-                    //       SizedBox(width: 5),
-                    //       Text('Sahabat Tani', style: TextStyle(fontSize: 14, color: Colors.white)),
-                    //       SizedBox(width: 5),
-                    //       Icon(Icons.chevron_right, color: Colors.white, size: 16),
-                    //     ],
-                    //   ),
-                    // ),
                   ],
                 ),
               ),
-
-              // Notifikasi
               Stack(
                 children: [
                   IconButton(
@@ -115,8 +112,6 @@ class ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
-
-              // Avatar
               GestureDetector(
                 onTap: () => _navigateToHome(context),
                 child: Container(

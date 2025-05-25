@@ -3,9 +3,9 @@ import 'pages/splash_screen.dart';
 import 'pages/home_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:firebase_ui_auth/firebase_ui_auth.dart';
-import 'firebase_options.dart';
+// import 'package:firebase_auth/firebase_auth.dart' as auth;
+// import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+// import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:agricare/pages/login_page.dart';
 
@@ -40,7 +40,8 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.mulishTextTheme(),
       ),
       initialRoute:
-          auth.FirebaseAuth.instance.currentUser == null ? '/login' : '/home',
+      '/splash',
+          // auth.FirebaseAuth.instance.currentUser == null ? '/login' : '/home',
       routes: {
         '/login': (context) => LoginPage(),
         '/home': (context) => const HomePage(),

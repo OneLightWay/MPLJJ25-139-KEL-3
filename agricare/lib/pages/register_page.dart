@@ -141,11 +141,23 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
+      // 🔍 Cek apakah email sudah dipakai
+      final signInMethods = await _auth.fetchSignInMethodsForEmail(
+        _emailController.text.trim(),
+      );
+      if (signInMethods.isNotEmpty) {
+        setState(() {
+          _errorMessage = "Email sudah terdaftar. Gunakan email lain.";
+          _isLoading = false;
+        });
+        return;
+      }
+      
       final credential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      
+
       await credential.user!.sendEmailVerification();
 
       // Tambahan: simpan info user ke Firebase Realtime Database (opsional)
