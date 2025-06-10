@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'lokasi_lahan.dart';
+import 'package:firebase_database/firebase_database.dart'; // Tetap untuk data wilayah
+import 'package:cloud_firestore/cloud_firestore.dart'; // Untuk menyimpan data lahan ke Firestore
+import 'lokasi_lahan.dart'; // Untuk kembali ke halaman LahanPage
 
+// Tambahkan userId ke constructor LahanTambahPage
 class LahanTambahPage extends StatefulWidget {
-  const LahanTambahPage({super.key});
+  final String userId; // Tambahkan ini
+  const LahanTambahPage({super.key, required this.userId}); // Perbarui constructor
 
   @override
   State<LahanTambahPage> createState() => _LahanTambahPageState();
 }
 
 class _LahanTambahPageState extends State<LahanTambahPage> {
-  final DatabaseReference dbRef = FirebaseDatabase.instance.ref("wilayah");
+  final DatabaseReference dbRef = FirebaseDatabase.instance.ref("wilayah"); // Untuk data wilayah (Realtime DB)
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Untuk menyimpan lahan (Firestore)
 
-  String? selectedProvince;
-  String? selectedCity;
-  String? selectedDistrict;
-  String? selectedSubdistrict;
+  String? selectedProvinceId;
+  String? selectedCityId;
+  String? selectedDistrictId;
+  String? selectedSubdistrictId;
+
+  String? selectedProvinceName; // Untuk menyimpan nama
+  String? selectedCityName;
+  String? selectedDistrictName;
+  String? selectedSubdistrictName;
 
   List<Map<String, String>> provinces = [];
   List<Map<String, String>> cities = [];
@@ -31,6 +40,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
     fetchProvinces();
   }
 
+  // --- Fungsi fetch tetap menggunakan Firebase Realtime Database ---
   Future<void> fetchProvinces() async {
     final snapshot = await dbRef.child('provinsi').get();
     if (snapshot.exists) {
@@ -102,13 +112,59 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       });
     }
   }
+  // --- Akhir fungsi fetch Realtime Database ---
 
-  void submitForm() {
-    // Di sini kamu bisa menyimpan data ke database atau lakukan proses lain
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Data lahan berhasil ditambahkan")),
-    );
-    Navigator.pop(context); // kembali ke halaman sebelumnya
+
+  // Fungsi untuk menyimpan data lahan ke Firestore
+  void submitForm() async {
+    if (namaLahanController.text.isEmpty ||
+        luasLahanController.text.isEmpty ||
+        selectedProvinceId == null ||
+        selectedCityId == null ||
+        selectedDistrictId == null ||
+        selectedSubdistrictId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Harap lengkapi semua data lahan dan lokasi.")),
+      );
+      return;
+    }
+
+    try {
+      // Buat peta data untuk disimpan ke Firestore
+      Map<String, dynamic> lahanData = {
+        'userId': widget.userId, // Menggunakan userId yang diterima
+        'namaLahan': namaLahanController.text.trim(),
+        'luas': luasLahanController.text.trim(),
+        'provinsiId': selectedProvinceId,
+        'provinsiName': selectedProvinceName,
+        'kotaId': selectedCityId,
+        'kotaName': selectedCityName,
+        'kecamatanId': selectedDistrictId,
+        'kecamatanName': selectedDistrictName,
+        'kelurahanId': selectedSubdistrictId,
+        'kelurahanName': selectedSubdistrictName,
+        'lokasi': '${selectedSubdistrictName}, ${selectedDistrictName}, ${selectedCityName}, ${selectedProvinceName}', // Lokasi lengkap untuk tampilan
+        'createdAt': FieldValue.serverTimestamp(), // Timestamp saat data dibuat
+      };
+
+      // Tambahkan data ke koleksi 'lahan' di Firestore
+      await _firestore.collection('lahan').add(lahanData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Data lahan berhasil ditambahkan!")),
+      );
+
+      // Kembali ke halaman LahanPage setelah berhasil menyimpan
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LahanPage()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal menambahkan lahan: $e")),
+      );
+      print("Error adding lahan to Firestore: $e");
+    }
   }
 
   @override
@@ -118,7 +174,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
         title: const Text('Tambah Lokasi Lahan'),
         backgroundColor: const Color(0xFF2EC83D),
         foregroundColor: Colors.white,
-       leading: BackButton(
+        leading: BackButton(
           color: Colors.white,
           onPressed: () {
             Navigator.pushReplacement(
@@ -128,7 +184,6 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
           },
         ),
       ),
-      
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -153,7 +208,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
 
             // Dropdown Provinsi
             DropdownButtonFormField<String>(
-              value: selectedProvince,
+              value: selectedProvinceId,
               hint: const Text("Pilih Provinsi"),
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: provinces.map((prov) {
@@ -164,10 +219,14 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
               }).toList(),
               onChanged: (val) {
                 setState(() {
-                  selectedProvince = val;
-                  selectedCity = null;
-                  selectedDistrict = null;
-                  selectedSubdistrict = null;
+                  selectedProvinceId = val;
+                  selectedProvinceName = provinces.firstWhere((p) => p['id'] == val)['name']; // Simpan nama
+                  selectedCityId = null;
+                  selectedCityName = null;
+                  selectedDistrictId = null;
+                  selectedDistrictName = null;
+                  selectedSubdistrictId = null;
+                  selectedSubdistrictName = null;
                   cities = [];
                   districts = [];
                   subdistricts = [];
@@ -179,7 +238,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
 
             // Dropdown Kota/Kabupaten
             DropdownButtonFormField<String>(
-              value: selectedCity,
+              value: selectedCityId,
               hint: const Text("Pilih Kab./Kota"),
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: cities.map((city) {
@@ -190,9 +249,12 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
               }).toList(),
               onChanged: (val) {
                 setState(() {
-                  selectedCity = val;
-                  selectedDistrict = null;
-                  selectedSubdistrict = null;
+                  selectedCityId = val;
+                  selectedCityName = cities.firstWhere((c) => c['id'] == val)['name']; // Simpan nama
+                  selectedDistrictId = null;
+                  selectedDistrictName = null;
+                  selectedSubdistrictId = null;
+                  selectedSubdistrictName = null;
                   districts = [];
                   subdistricts = [];
                 });
@@ -203,7 +265,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
 
             // Dropdown Kecamatan
             DropdownButtonFormField<String>(
-              value: selectedDistrict,
+              value: selectedDistrictId,
               hint: const Text("Pilih Kecamatan"),
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: districts.map((dist) {
@@ -214,8 +276,10 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
               }).toList(),
               onChanged: (val) {
                 setState(() {
-                  selectedDistrict = val;
-                  selectedSubdistrict = null;
+                  selectedDistrictId = val;
+                  selectedDistrictName = districts.firstWhere((d) => d['id'] == val)['name']; // Simpan nama
+                  selectedSubdistrictId = null;
+                  selectedSubdistrictName = null;
                   subdistricts = [];
                 });
                 if (val != null) fetchSubdistricts(val);
@@ -225,7 +289,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
 
             // Dropdown Kelurahan
             DropdownButtonFormField<String>(
-              value: selectedSubdistrict,
+              value: selectedSubdistrictId,
               hint: const Text("Pilih Kelurahan"),
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: subdistricts.map((sub) {
@@ -236,7 +300,8 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
               }).toList(),
               onChanged: (val) {
                 setState(() {
-                  selectedSubdistrict = val;
+                  selectedSubdistrictId = val;
+                  selectedSubdistrictName = subdistricts.firstWhere((s) => s['id'] == val)['name']; // Simpan nama
                 });
               },
             ),
