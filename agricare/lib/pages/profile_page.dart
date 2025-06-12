@@ -4,6 +4,7 @@ import 'home_page.dart';
 import 'login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'profile_edit_page.dart'; // Pastikan import ini benar
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,9 +14,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String nama = '';
-  String role = '';
-  int poin = 0;
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -24,30 +24,95 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _getUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+    if (uid == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
 
     final ref = FirebaseDatabase.instance.ref().child('users/$uid');
     final snapshot = await ref.get();
 
     if (snapshot.exists) {
-      final data = snapshot.value as Map;
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
       setState(() {
-        nama = data['nama'] ?? '';
-        role = data['role'] ?? 'Petani';
-        poin = data['poin'] ?? 0;
+        _userData = data;
       });
+    } else {
+      _userData = null;
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  // --- Fungsi baru untuk mengirim email reset password ---
+  Future<void> _sendPasswordResetEmail() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda harus login untuk mereset password.')),
+      );
+      return;
+    }
+
+    if (user.email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Akun Anda tidak memiliki email terdaftar.')),
+      );
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: user.email!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Email reset password telah dikirim ke ${user.email}. Harap periksa email Anda.')),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'user-not-found') {
+        message = 'Tidak ada pengguna yang terdaftar dengan email ini.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Alamat email tidak valid.';
+      } else {
+        message = 'Gagal mengirim email reset password. Coba lagi: ${e.message}';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      print("Error sending password reset email: ${e.code} - ${e.message}");
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Terjadi kesalahan tidak terduga: $e')),
+      );
+      print("Unexpected error sending password reset email: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.grey[100],
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final nama = _userData?['nama'] ?? 'Pengguna Anonim';
+    final role = _userData?['role'] ?? 'Petani';
+    final poin = _userData?['poin'] ?? 0;
+    // final email = FirebaseAuth.instance.currentUser?.email ?? 'Tidak Tersedia'; // Bisa ditampilkan jika ingin
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header dan tombol kembali
             Stack(
               children: [
                 Container(
@@ -93,7 +158,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 10),
 
-            // Kartu Profil
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               shape: RoundedRectangleBorder(
@@ -113,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      nama.isNotEmpty ? nama : 'Memuat...',
+                      nama,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -121,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      role.isNotEmpty ? role : '',
+                      role,
                       style: const TextStyle(
                         color: Colors.green,
                         fontSize: 12,
@@ -163,7 +227,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
             const SizedBox(height: 20),
 
-            // Menu Akun
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -171,16 +234,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   const Text("Akun", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 10),
-                  _buildMenuItem(context, "Edit Profil", Icons.edit),
-                  // _buildMenuItem(context, "Pilih Bahasa", Icons.language),
+                  _buildMenuItem(context, "Edit Profil", Icons.edit, onTap: () {
+                    if (_userData != null && FirebaseAuth.instance.currentUser?.uid != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditProfilePage(
+                            userId: FirebaseAuth.instance.currentUser!.uid,
+                            initialUserData: _userData!,
+                          ),
+                        ),
+                      ).then((_) {
+                        _getUserData();
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Data profil tidak tersedia untuk diedit.')),
+                      );
+                    }
+                  }),
                   const SizedBox(height: 10),
                   const Text("Keamanan dan Data", style: TextStyle(fontWeight: FontWeight.bold)),
-                  _buildMenuItem(context, "Ubah Password", Icons.lock),
-                  // _buildMenuItem(context, "Perbarui Data", Icons.refresh),
-                  // _buildMenuItem(context, "Version (v1.0.0) Check Update", Icons.system_update),
+                  _buildMenuItem(context, "Ubah Password", Icons.lock, onTap: () {
+                    // <<< FUNGSI RESET PASSWORD DI SINI >>>
+                    _sendPasswordResetEmail();
+                  }),
                   const SizedBox(height: 10),
                   const Text("Panduan", style: TextStyle(fontWeight: FontWeight.bold)),
-                  _buildMenuItem(context, "Lihat Panduan", Icons.help),
+                  _buildMenuItem(context, "Lihat Panduan", Icons.help, onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Fitur Panduan akan datang.')),
+                    );
+                  }),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -190,7 +275,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     onPressed: () {
-                      FirebaseAuth.instance.signOut(); // <-- penting
+                      FirebaseAuth.instance.signOut();
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => const LoginPage()),

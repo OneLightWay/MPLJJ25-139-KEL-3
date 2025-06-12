@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
-import 'package:firebase_auth/firebase_auth.dart'; // Untuk memeriksa user saat delete
-import 'package:intl/intl.dart'; // Untuk format tanggal dan angka
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // <<< PASTIKAN INI ADA DAN TIDAK ADA TYPO
 
 import 'lokasi_lahan.dart';
-import 'lokasi_lahan_edit.dart'; // Pastikan nama file ini benar
-import 'lokasi_lahan_detail_tanam.dart'; // Import DetailTanamPage
-import 'lokasi_lahan_tambah_tanam.dart'; // Import TambahJadwalTanamPage
+import 'lokasi_lahan_edit.dart';
+import 'lokasi_lahan_detail_tanam.dart';
+import 'lokasi_lahan_tambah_tanam.dart';
 
 class LahanDetailPage extends StatefulWidget {
-  final String lahanId; // Tambahkan ini untuk menerima ID lahan
+  final String lahanId;
   const LahanDetailPage({super.key, required this.lahanId});
 
   @override
@@ -18,28 +19,26 @@ class LahanDetailPage extends StatefulWidget {
 
 class _LahanDetailPageState extends State<LahanDetailPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance; // Untuk user ID saat ini
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Map<String, dynamic>? _lahanData;
-  Map<String, dynamic>? _currentTanamData; // Data tanam yang sedang berjalan
-  List<Map<String, dynamic>> _tanamHistoryList = []; // Daftar riwayat tanam
+  Map<String, dynamic>? _currentTanamData;
+  List<Map<String, dynamic>> _tanamHistoryList = [];
   bool _isLoading = true;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _fetchPageData(); // Memuat semua data yang dibutuhkan
+    _fetchPageData();
   }
 
-  // Fungsi utama untuk memuat semua data halaman
   Future<void> _fetchPageData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
-      // 1. Memuat Data Lahan
       DocumentSnapshot lahanDoc = await _firestore.collection('lahan').doc(widget.lahanId).get();
       if (lahanDoc.exists) {
         _lahanData = lahanDoc.data() as Map<String, dynamic>;
@@ -49,38 +48,37 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
         return;
       }
 
-      // 2. Memuat Data Tanam Berjalan (Ongoing Planting)
       QuerySnapshot currentTanamSnapshot = await _firestore
           .collection('jadwal_tanam')
           .where('lahanId', isEqualTo: widget.lahanId)
-          .where('userId', isEqualTo: _auth.currentUser?.uid) // Pastikan milik user ini
-          .where('petani_tanam_is_panen', isEqualTo: 0) // Belum panen
-          .limit(1) // Ambil satu yang paling baru/relevan
+          .where('userId', isEqualTo: _auth.currentUser?.uid)
+          .where('petani_tanam_is_panen', isEqualTo: 0)
+          .limit(1)
           .get();
 
       if (currentTanamSnapshot.docs.isNotEmpty) {
         _currentTanamData = currentTanamSnapshot.docs.first.data() as Map<String, dynamic>;
-        _currentTanamData!['tanamId'] = currentTanamSnapshot.docs.first.id; // Simpan ID dokumen
+        _currentTanamData!['tanamId'] = currentTanamSnapshot.docs.first.id;
       } else {
-        _currentTanamData = null; // Tidak ada tanam berjalan
+        _currentTanamData = null;
       }
 
-      // 3. Memuat Riwayat Data Tanam (Planting History)
       QuerySnapshot tanamHistorySnapshot = await _firestore
           .collection('jadwal_tanam')
           .where('lahanId', isEqualTo: widget.lahanId)
           .where('userId', isEqualTo: _auth.currentUser?.uid)
-          .orderBy('petani_tanam_date', descending: true) // Urutkan dari yang terbaru
+          .orderBy('petani_tanam_date', descending: true)
           .get();
 
       _tanamHistoryList = tanamHistorySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        data['tanamId'] = doc.id; // Simpan ID dokumen
+        data['tanamId'] = doc.id;
         return data;
       }).toList();
 
     } catch (e) {
       _errorMessage = "Gagal memuat data: $e";
+      // PERBAIKAN: Interpolasi string yang benar
       print("Error fetching all data for LahanDetailPage: $e");
     } finally {
       setState(() {
@@ -89,17 +87,17 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
     }
   }
 
-  // Fungsi untuk mengonfirmasi dan menghapus lahan
   Future<void> _confirmDeleteLahan() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // User must tap button!
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Hapus Lahan'),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
+                // PERBAIKAN: Interpolasi string yang benar
                 Text('Apakah Anda yakin ingin menghapus lahan "${_lahanData?['namaLahan'] ?? 'ini'}"?'),
                 const Text('Tindakan ini tidak dapat dibatalkan.'),
               ],
@@ -116,8 +114,8 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Hapus'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog
-                _deleteLahan(); // Lanjutkan dengan penghapusan
+                Navigator.of(context).pop();
+                _deleteLahan();
               },
             ),
           ],
@@ -132,7 +130,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Lahan berhasil dihapus.')),
       );
-      // Kembali ke halaman daftar lahan setelah penghapusan berhasil
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LahanPage()),
@@ -141,11 +138,11 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menghapus lahan: $e')),
       );
+      // PERBAIKAN: Interpolasi string yang benar
       print("Error deleting lahan: $e");
     }
   }
 
-  // Fungsi untuk mengonfirmasi dan menghapus jadwal tanam
   Future<void> _confirmDeleteJadwalTanam(String tanamId, String varietasName) async {
     return showDialog<void>(
       context: context,
@@ -172,8 +169,8 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Hapus'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog konfirmasi
-                _deleteJadwalTanam(tanamId); // Lanjutkan dengan penghapusan
+                Navigator.of(context).pop();
+                _deleteJadwalTanam(tanamId);
               },
             ),
           ],
@@ -188,8 +185,7 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Jadwal tanam berhasil dihapus.')),
       );
-      // Muat ulang data setelah penghapusan berhasil
-      _fetchPageData(); // Muat ulang seluruh halaman
+      _fetchPageData();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menghapus jadwal tanam: $e')),
@@ -198,7 +194,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
     }
   }
 
-  // Fungsi untuk mengonversi luas dari string ke Ha (misal "2000 m²" -> 0.2 Ha)
   double _convertLuasToHa(String luasString) {
     if (luasString.isEmpty) return 0.0;
     try {
@@ -216,16 +211,17 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
           return 0.0;
       }
     } catch (e) {
+      // PERBAIKAN: Hapus tag <span> dan math-inline
       print("Error parsing luas string: $e");
       return 0.0;
     }
   }
 
-  // Fungsi untuk mendapatkan path gambar fase tanam
   String _getFaseImagePath(DateTime tanamDate) {
     int jadwalDay = DateTime.now().difference(tanamDate).inDays;
     String imagePath = 'assets/images/fase/';
 
+    // PERBAIKAN: Hapus tag <span> dan math-inline pada semua return
     if (jadwalDay >= 0 && jadwalDay <= 7) {
       return '${imagePath}1.png';
     } else if (jadwalDay >= 7 && jadwalDay <= 10) {
@@ -243,10 +239,9 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
     } else if (jadwalDay >= 103) {
       return '${imagePath}8.png';
     }
-    return '${imagePath}placeholder.png'; // Fallback image
+    return '${imagePath}placeholder.png';
   }
 
-  // Fungsi untuk format angka menjadi Rupiah (opsional, jika Anda ingin mirip HELPER.toRp)
   String _formatToRupiah(num? value) {
     if (value == null) return '-';
     final formatter = NumberFormat.currency(locale: 'id_ID', symbol: '', decimalDigits: 0);
@@ -256,7 +251,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Tampilkan loading indicator atau pesan error
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
@@ -306,7 +300,7 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _fetchPageData, // Coba lagi
+                  onPressed: _fetchPageData,
                   child: const Text('Coba Lagi'),
                 ),
               ],
@@ -316,17 +310,18 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
       );
     }
 
-    // Jika data sudah dimuat dan tidak ada error
     final namaLahan = _lahanData?['namaLahan'] ?? 'Tidak Tersedia';
-    final luasRawString = _lahanData?['luas'] ?? ''; // Ex: "2000 m²"
-    final luasInHa = _convertLuasToHa(luasRawString); // Konversi ke Ha
+    final luasRawString = _lahanData?['luas'] ?? '';
+    final luasInHa = _convertLuasToHa(luasRawString);
     final alamat = _lahanData?['alamat'] ?? 'Tidak Tersedia';
-    final lokasiLengkap = _lahanData?['lokasi'] ?? 'Tidak Tersedia'; // Ex: "Kelurahan, Kecamatan, Kota, Provinsi"
+    final lokasiLengkap = _lahanData?['lokasi'] ?? 'Tidak Tersedia';
+    final latitude = (_lahanData?['latitude'] as num?)?.toDouble();
+    final longitude = (_lahanData?['longitude'] as num?)?.toDouble();
+
 
     return Scaffold(
       body: Column(
         children: [
-          // Header hijau (tetap seperti yang Anda inginkan)
           Container(
             padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
             height: 100,
@@ -378,7 +373,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // === Data Lahan ===
                     _buildSectionCard(
                       context,
                       title: "Data Lahan",
@@ -396,23 +390,47 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: _confirmDeleteLahan, // Panggil konfirmasi hapus
+                          onPressed: _confirmDeleteLahan,
                         ),
                       ],
                       children: [
                         _buildLabel("Nama lahan", namaLahan),
+                        // PERBAIKAN: Interpolasi string yang benar
                         _buildLabel("Luas Lahan", "$luasRawString (${luasInHa.toStringAsFixed(2)} Ha)"),
                         _buildLabel("Alamat", alamat),
                         _buildLabel("Lokasi Lengkap", lokasiLengkap),
                         const SizedBox(height: 10),
                         Container(
-                          height: 150,
+                          height: 250, // Tinggi peta
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.grey[300],
                           ),
                           alignment: Alignment.center,
-                          child: const Text("Map Placeholder"), // Placeholder untuk peta
+                          child: (latitude != null && longitude != null)
+                              ? GoogleMap(
+                                  initialCameraPosition: CameraPosition(
+                                    target: LatLng(latitude, longitude),
+                                    zoom: 15,
+                                  ),
+                                  markers: {
+                                    Marker(
+                                      markerId: MarkerId(widget.lahanId),
+                                      position: LatLng(latitude, longitude),
+                                      infoWindow: InfoWindow(title: namaLahan),
+                                    ),
+                                  },
+                                  zoomControlsEnabled: false,
+                                  zoomGesturesEnabled: false,
+                                  scrollGesturesEnabled: false,
+                                  rotateGesturesEnabled: false,
+                                  tiltGesturesEnabled: false,
+                                  myLocationButtonEnabled: false,
+                                  compassEnabled: false,
+                                )
+                              : const Center(
+                                  child: Text("Lokasi Peta Tidak Tersedia"),
+                                ),
                         ),
                       ],
                     ),
@@ -427,19 +445,16 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                         IconButton(
                           icon: const Icon(Icons.swap_horiz, color: Colors.grey),
                           onPressed: () {
-                            // Aksi untuk "swap" atau ganti tanam
-                            // Ini akan membuka form atau dialog untuk memulai tanam baru
                             print("Swap Tanam / Mulai Tanam Baru");
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.add, color: Colors.blue),
                           onPressed: () {
-                            // Navigasi ke halaman tambah jadwal tanam
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => TambahJadwalTanamPage( // Menggunakan nama kelas yang benar
+                                builder: (context) => TambahJadwalTanamPage(
                                   lahanId: widget.lahanId,
                                   userId: _auth.currentUser!.uid,
                                 ),
