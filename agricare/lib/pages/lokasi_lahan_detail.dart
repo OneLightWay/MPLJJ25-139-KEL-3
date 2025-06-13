@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // <<< PASTIKAN INI ADA DAN TIDAK ADA TYPO
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'lokasi_lahan.dart';
 import 'lokasi_lahan_edit.dart';
@@ -78,7 +78,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
 
     } catch (e) {
       _errorMessage = "Gagal memuat data: $e";
-      // PERBAIKAN: Interpolasi string yang benar
       print("Error fetching all data for LahanDetailPage: $e");
     } finally {
       setState(() {
@@ -97,7 +96,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                // PERBAIKAN: Interpolasi string yang benar
                 Text('Apakah Anda yakin ingin menghapus lahan "${_lahanData?['namaLahan'] ?? 'ini'}"?'),
                 const Text('Tindakan ini tidak dapat dibatalkan.'),
               ],
@@ -124,12 +122,31 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
     );
   }
 
+  // >>> PERUBAHAN DI FUNGSI _deleteLahan() INI UNTUK CASCADING DELETE <<<
   Future<void> _deleteLahan() async {
     try {
+      // 1. Dapatkan semua jadwal tanam yang terkait dengan lahan ini untuk user saat ini
+      final QuerySnapshot jadwalTanamDocs = await _firestore
+          .collection('jadwal_tanam')
+          .where('lahanId', isEqualTo: widget.lahanId)
+          .where('userId', isEqualTo: _auth.currentUser?.uid) // Penting: Hanya hapus jadwal tanam milik user ini
+          .get();
+
+      // 2. Hapus setiap dokumen jadwal tanam yang terkait
+      for (var doc in jadwalTanamDocs.docs) {
+        await _firestore.collection('jadwal_tanam').doc(doc.id).delete();
+        // CATATAN: Jika Anda memiliki sub-koleksi di bawah 'jadwal_tanam' (misal: 'jadwal_tanam/{id}/actions'),
+        // Anda juga perlu menghapus dokumen-dokumen di sub-koleksi tersebut secara manual.
+        // Firestore tidak menghapus sub-koleksi secara otomatis saat dokumen induk dihapus.
+      }
+
+      // 3. Setelah semua jadwal tanam terkait dihapus, baru hapus dokumen lahan
       await _firestore.collection('lahan').doc(widget.lahanId).delete();
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lahan berhasil dihapus.')),
+        const SnackBar(content: Text('Lahan dan semua jadwal tanam terkait berhasil dihapus.')),
       );
+      // Kembali ke halaman daftar lahan setelah penghapusan berhasil
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LahanPage()),
@@ -138,10 +155,11 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menghapus lahan: $e')),
       );
-      // PERBAIKAN: Interpolasi string yang benar
       print("Error deleting lahan: $e");
     }
   }
+  // >>> AKHIR PERUBAHAN DI FUNGSI _deleteLahan() <<<
+
 
   Future<void> _confirmDeleteJadwalTanam(String tanamId, String varietasName) async {
     return showDialog<void>(
@@ -211,7 +229,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
           return 0.0;
       }
     } catch (e) {
-      // PERBAIKAN: Hapus tag <span> dan math-inline
       print("Error parsing luas string: $e");
       return 0.0;
     }
@@ -221,7 +238,6 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
     int jadwalDay = DateTime.now().difference(tanamDate).inDays;
     String imagePath = 'assets/images/fase/';
 
-    // PERBAIKAN: Hapus tag <span> dan math-inline pada semua return
     if (jadwalDay >= 0 && jadwalDay <= 7) {
       return '${imagePath}1.png';
     } else if (jadwalDay >= 7 && jadwalDay <= 10) {
@@ -395,13 +411,12 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                       ],
                       children: [
                         _buildLabel("Nama lahan", namaLahan),
-                        // PERBAIKAN: Interpolasi string yang benar
                         _buildLabel("Luas Lahan", "$luasRawString (${luasInHa.toStringAsFixed(2)} Ha)"),
                         _buildLabel("Alamat", alamat),
                         _buildLabel("Lokasi Lengkap", lokasiLengkap),
                         const SizedBox(height: 10),
                         Container(
-                          height: 250, // Tinggi peta
+                          height: 250,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             color: Colors.grey[300],
@@ -587,7 +602,7 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                                   ],
                                 ),
                                 onTap: () {
-                                  if (tanamId != ' ') {
+                                  if (tanamId != null) { // PERBAIKAN: Gunakan null check yang benar (tanamId != null)
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -613,31 +628,31 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    // const SizedBox(height: 16),
 
-                    // === Rekomendasi Produk ===
-                    _buildSectionCard(
-                      context,
-                      title: "Rekomendasi Produk",
-                      children: [
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text('Daftar rekomendasi produk akan tampil di sini.'),
-                          ),
-                        ),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildRekomenProdukItem("Jagung NK212", 'assets/images/avatars/produkTradder.png'),
-                              _buildRekomenProdukItem("Padi Ciherang", 'assets/images/avatars/produkTradder.png'),
-                              _buildRekomenProdukItem("Cabai Merah", 'assets/images/avatars/produkTradder.png'),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
+                    // // === Rekomendasi Produk ===
+                    // _buildSectionCard(
+                    //   context,
+                    //   title: "Rekomendasi Produk",
+                    //   children: [
+                    //     const Center(
+                    //       child: Padding(
+                    //         padding: EdgeInsets.all(16.0),
+                    //         child: Text('Daftar rekomendasi produk akan tampil di sini.'),
+                    //       ),
+                    //     ),
+                    //     SingleChildScrollView(
+                    //       scrollDirection: Axis.horizontal,
+                    //       child: Row(
+                    //         children: [
+                    //           _buildRekomenProdukItem("Jagung NK212", 'assets/images/avatars/produkTradder.png'),
+                    //           _buildRekomenProdukItem("Padi Ciherang", 'assets/images/avatars/produkTradder.png'),
+                    //           _buildRekomenProdukItem("Cabai Merah", 'assets/images/avatars/produkTradder.png'),
+                    //         ],
+                    //       ),
+                    //     )
+                    //   ],
+                    // ),
                   ],
                 ),
               ),

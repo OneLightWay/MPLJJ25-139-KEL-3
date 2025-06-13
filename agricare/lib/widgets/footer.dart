@@ -22,12 +22,12 @@ class Footer extends StatelessWidget {
         //   label: 'Artikel',
         // ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Beranda',
-        ),
-        BottomNavigationBarItem(
           icon: FaIcon(FontAwesomeIcons.robot),
           label: 'ChatBot',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: 'Beranda',
         ),
         // BottomNavigationBarItem(
         //   icon: Icon(Icons.camera_alt),

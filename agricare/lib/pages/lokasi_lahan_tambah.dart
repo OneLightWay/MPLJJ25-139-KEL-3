@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:firebase_database/firebase_database.dart'; // Tetap untuk data wilayah
+import 'package:cloud_firestore/cloud_firestore.dart'; // Untuk menyimpan data lahan ke Firestore
+import 'package:intl/intl.dart'; // Untuk format tanggal (jika ada)
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Pastikan ini ada
+import 'package:geocoding/geocoding.dart'; // Pastikan ini ada
 
-import 'lokasi_lahan.dart';
-import 'lokasi_lahan_detail.dart';
-import 'pilih_lokasi_peta.dart';
+import 'lokasi_lahan.dart'; // Untuk kembali ke halaman LahanPage
+import 'lokasi_lahan_detail.dart'; // Ini dibutuhkan untuk navigasi ke detail lahan yang baru ditambahkan
+import 'pilih_lokasi_peta.dart'; // Import halaman pemilihan peta
 
 class LahanTambahPage extends StatefulWidget {
   final String userId;
@@ -18,7 +18,7 @@ class LahanTambahPage extends StatefulWidget {
 }
 
 class _LahanTambahPageState extends State<LahanTambahPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>(); // Pastikan ini dideklarasikan dengan benar
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final DatabaseReference dbRef = FirebaseDatabase.instance.ref("wilayah");
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -32,9 +32,10 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
   String? selectedDistrictName;
   String? selectedSubdistrictName;
 
-  LatLng? _selectedMapLocation;
-  String _selectedMapAddress = "Ketuk untuk pilih lokasi di peta";
+  LatLng? _selectedMapLocation; // Koordinat yang dipilih dari peta
+  String _selectedMapAddress = "Ketuk untuk pilih lokasi di peta"; // Alamat dari geocoding
 
+  // PERBAIKAN TIPE: Menggunakan List<Map<String, dynamic>>
   List<Map<String, dynamic>> provinces = [];
   List<Map<String, dynamic>> cities = [];
   List<Map<String, dynamic>> districts = [];
@@ -51,17 +52,17 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
 
   @override
   void dispose() {
-    // Pastikan controller di-dispose untuk mencegah memory leak
     namaLahanController.dispose();
     luasLahanController.dispose();
     super.dispose();
   }
 
+  // --- Fungsi fetch tetap menggunakan Firebase Realtime Database ---
   Future<void> fetchProvinces() async {
     final snapshot = await dbRef.child('provinsi').get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, dynamic>> provList = [];
+      final List<Map<String, dynamic>> provList = []; // PERBAIKAN TIPE
       data.forEach((key, value) {
         final val = Map<String, dynamic>.from(value);
         provList.add({'id': val['id'] as String, 'name': val['name'] as String});
@@ -82,7 +83,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
         .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, dynamic>> cityList = [];
+      final List<Map<String, dynamic>> cityList = []; // PERBAIKAN TIPE
       data.forEach((key, value) {
         final val = Map<String, dynamic>.from(value);
         cityList.add({'id': val['id'] as String, 'name': val['name'] as String});
@@ -103,7 +104,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
         .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, dynamic>> distList = [];
+      final List<Map<String, dynamic>> distList = []; // PERBAIKAN TIPE
       data.forEach((key, value) {
         final val = Map<String, dynamic>.from(value);
         distList.add({'id': val['id'] as String, 'name': val['name'] as String});
@@ -124,7 +125,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
         .get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      final List<Map<String, dynamic>> subList = [];
+      final List<Map<String, dynamic>> subList = []; // PERBAIKAN TIPE
       data.forEach((key, value) {
         final val = Map<String, dynamic>.from(value);
         subList.add({'id': val['id'] as String, 'name': val['name'] as String});
@@ -136,7 +137,9 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       }
     }
   }
+  // --- Akhir fungsi fetch Realtime Database ---
 
+  // FUNGSI _getAddressFromLatLng
   Future<void> _getAddressFromLatLng(LatLng latLng) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
@@ -158,9 +161,9 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
     }
   }
 
-  // <<< PERBAIKAN DI SINI: FUNGSI submitForm() >>>
+
   Future<void> submitForm() async {
-    if (!_formKey.currentState!.validate()) { // Pastikan _formKey dideklarasikan dan digunakan
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Harap lengkapi semua field yang wajib diisi.")),
       );
@@ -175,6 +178,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       return;
     }
     
+    // Validasi lokasi peta
     if (_selectedMapLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Harap pilih lokasi lahan di peta.")),
@@ -182,43 +186,47 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       return;
     }
 
-    // Tampilkan loading indicator saat proses submit
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Menyimpan data lahan...")),
     );
 
     try {
+      // Ambil nama lengkap dari ID yang terpilih
+      String finalProvinsiName = provinces.firstWhere((p) => p['id'] == selectedProvinceId)['name']! as String;
+      String finalKotaName = cities.firstWhere((c) => c['id'] == selectedCityId)['name']! as String;
+      String finalKecamatanName = districts.firstWhere((d) => d['id'] == selectedDistrictId)['name']! as String;
+      String finalKelurahanName = subdistricts.firstWhere((s) => s['id'] == selectedSubdistrictId)['name']! as String;
+
+
       Map<String, dynamic> lahanData = {
         'userId': widget.userId,
         'namaLahan': namaLahanController.text.trim(),
         'luas': luasLahanController.text.trim(),
         'provinsiId': selectedProvinceId,
-        'provinsiName': selectedProvinceName,
+        'provinsiName': finalProvinsiName,
         'kotaId': selectedCityId,
-        'kotaName': selectedCityName,
+        'kotaName': finalKotaName,
         'kecamatanId': selectedDistrictId,
-        'kecamatanName': selectedDistrictName,
+        'kecamatanName': finalKecamatanName,
         'kelurahanId': selectedSubdistrictId,
-        'kelurahanName': selectedSubdistrictName,
-        'lokasi': '${selectedSubdistrictName}, ${selectedDistrictName}, ${selectedCityName}, ${selectedProvinceName}',
-        'latitude': _selectedMapLocation!.latitude,
-        'longitude': _selectedMapLocation!.longitude,
-        'lokasi_peta_text': _selectedMapAddress,
+        'kelurahanName': finalKelurahanName,
+        'lokasi': '$finalKelurahanName, $finalKecamatanName, $finalKotaName, $finalProvinsiName',
+        'latitude': _selectedMapLocation!.latitude, // SIMPAN LATITUDE
+        'longitude': _selectedMapLocation!.longitude, // SIMPAN LONGITUDE
+        'lokasi_peta_text': _selectedMapAddress, // SIMPAN ALAMAT DARI PETA
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      // Tambahkan data ke Firestore dan dapatkan DocumentReference
       DocumentReference newDocRef = await _firestore.collection('lahan').add(lahanData);
-      String newLahanId = newDocRef.id; // Dapatkan ID lahan yang baru dibuat
+      String newLahanId = newDocRef.id;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Data lahan berhasil ditambahkan!")),
       );
 
-      // Navigasi ke LahanDetailPage untuk lahan yang baru dibuat
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LahanDetailPage(lahanId: newLahanId)), // <<< PERBAIKAN NAVIGASI
+        MaterialPageRoute(builder: (context) => LahanDetailPage(lahanId: newLahanId)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -227,7 +235,6 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       print("Error adding lahan to Firestore: $e");
     }
   }
-  // <<< AKHIR PERBAIKAN submitForm() >>>
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +246,6 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
         leading: BackButton(
           color: Colors.white,
           onPressed: () {
-            // Ketika menekan tombol kembali, cukup kembali ke LahanPage (daftar lahan)
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const LahanPage()),
@@ -249,8 +255,8 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form( // Pastikan ini membungkus semua input form
-          key: _formKey, // Menggunakan GlobalKey yang dideklarasikan
+        child: Form(
+          key: _formKey,
           child: Column(
             children: [
               TextFormField(
@@ -292,7 +298,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 hint: const Text("Pilih Provinsi"),
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: provinces.map((prov) {
-                  return DropdownMenuItem<String>(
+                  return DropdownMenuItem<String>( // PERBAIKAN TIPE
                     value: prov['id'] as String,
                     child: Text(prov['name']! as String),
                   );
@@ -300,7 +306,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 onChanged: (val) {
                   setState(() {
                     selectedProvinceId = val;
-                    selectedProvinceName = provinces.firstWhere((p) => p['id'] == val)['name'];
+                    selectedProvinceName = provinces.firstWhere((p) => p['id'] == val)['name'] as String;
                     selectedCityId = null;
                     selectedCityName = null;
                     selectedDistrictId = null;
@@ -323,7 +329,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 hint: const Text("Pilih Kab./Kota"),
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: cities.map((city) {
-                  return DropdownMenuItem<String>(
+                  return DropdownMenuItem<String>( // PERBAIKAN TIPE
                     value: city['id'] as String,
                     child: Text(city['name']! as String),
                   );
@@ -331,7 +337,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 onChanged: (val) {
                   setState(() {
                     selectedCityId = val;
-                    selectedCityName = cities.firstWhere((c) => c['id'] == val)['name'];
+                    selectedCityName = cities.firstWhere((c) => c['id'] == val)['name'] as String;
                     selectedDistrictId = null;
                     selectedDistrictName = null;
                     selectedSubdistrictId = null;
@@ -351,7 +357,7 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 hint: const Text("Pilih Kecamatan"),
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: districts.map((dist) {
-                  return DropdownMenuItem<String>(
+                  return DropdownMenuItem<String>( // PERBAIKAN TIPE
                     value: dist['id'] as String,
                     child: Text(dist['name']! as String),
                   );
@@ -359,12 +365,12 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 onChanged: (val) {
                   setState(() {
                     selectedDistrictId = val;
-                    selectedDistrictName = districts.firstWhere((d) => d['id'] == val)['name'];
+                    selectedDistrictName = districts.firstWhere((d) => d['id'] == val)['name'] as String;
                     selectedSubdistrictId = null;
                     selectedSubdistrictName = null;
                     subdistricts = [];
                   });
-                  if (val != null) fetchSubdistricts(val);
+                  if (val != null) fetchDistricts(val);
                 },
                 validator: (value) => value == null ? 'Kecamatan wajib dipilih' : null,
               ),
@@ -376,29 +382,29 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                 hint: const Text("Pilih Kelurahan"),
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: subdistricts.map((sub) {
-                  return DropdownMenuItem<String>(
-                    value: sub['id'],
+                  return DropdownMenuItem<String>( // PERBAIKAN TIPE
+                    value: sub['id'] as String,
                     child: Text(sub['name']! as String),
                   );
                 }).toList(),
                 onChanged: (val) {
                   setState(() {
                     selectedSubdistrictId = val;
-                    selectedSubdistrictName = subdistricts.firstWhere((s) => s['id'] == val)['name'];
+                    selectedSubdistrictName = subdistricts.firstWhere((s) => s['id'] == val)['name'] as String;
                   });
                 },
                 validator: (value) => value == null ? 'Kelurahan wajib dipilih' : null,
               ),
               const SizedBox(height: 20),
 
-              // Widget Pemilihan Lokasi Peta
+              // Bagian Peta Interaktif
               GestureDetector(
                 onTap: () async {
                   final LatLng? pickedLocation = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => MapSelectionPage(
-                        initialLocation: _selectedMapLocation,
+                        initialLocation: _selectedMapLocation, // Teruskan lokasi awal jika ada
                       ),
                     ),
                   );
@@ -406,11 +412,11 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                     setState(() {
                       _selectedMapLocation = pickedLocation;
                     });
-                    _getAddressFromLatLng(_selectedMapLocation!);
+                    await _getAddressFromLatLng(_selectedMapLocation!); // Dapatkan alamat
                   }
                 },
                 child: Container(
-                  height: 200,
+                  height: 200, // Tinggi untuk tampilan peta mini
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(5),
@@ -422,26 +428,86 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
                           children: [
                             const Icon(Icons.map, size: 50, color: Colors.grey),
                             Text(_selectedMapAddress, textAlign: TextAlign.center),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () async {
+                                final LatLng? pickedLocation = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MapSelectionPage(
+                                      initialLocation: _selectedMapLocation,
+                                    ),
+                                  ),
+                                );
+                                if (pickedLocation != null) {
+                                  setState(() {
+                                    _selectedMapLocation = pickedLocation;
+                                  });
+                                  await _getAddressFromLatLng(_selectedMapLocation!);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Pilih Lokasi di Peta'),
+                            ),
                           ],
                         )
-                      : GoogleMap(
-                          initialCameraPosition: CameraPosition(
-                            target: _selectedMapLocation!,
-                            zoom: 15,
-                          ),
-                          markers: {
-                            Marker(
-                              markerId: const MarkerId('selected_pin'),
-                              position: _selectedMapLocation!,
+                      : Stack( // Gunakan Stack untuk menempatkan tombol di atas peta
+                          alignment: Alignment.center,
+                          children: [
+                            GoogleMap(
+                              initialCameraPosition: CameraPosition(
+                                target: _selectedMapLocation!,
+                                zoom: 15,
+                              ),
+                              markers: {
+                                Marker(
+                                  markerId: const MarkerId('selected_pin'),
+                                  position: _selectedMapLocation!,
+                                ),
+                              },
+                              zoomControlsEnabled: false,
+                              zoomGesturesEnabled: false,
+                              scrollGesturesEnabled: false,
+                              rotateGesturesEnabled: false,
+                              tiltGesturesEnabled: false,
+                              myLocationButtonEnabled: false,
+                              compassEnabled: false,
                             ),
-                          },
-                          zoomControlsEnabled: false,
-                          zoomGesturesEnabled: false,
-                          scrollGesturesEnabled: false,
-                          rotateGesturesEnabled: false,
-                          tiltGesturesEnabled: false,
-                          myLocationButtonEnabled: false,
-                          compassEnabled: false,
+                            // Overlay tombol "Edit Lokasi" di atas peta
+                            Positioned(
+                              bottom: 10,
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.edit_location_alt, size: 20),
+                                label: const Text('Edit Lokasi'),
+                                onPressed: () async {
+                                  final LatLng? pickedLocation = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => MapSelectionPage(
+                                        initialLocation: _selectedMapLocation,
+                                      ),
+                                    ),
+                                  );
+                                  if (pickedLocation != null) {
+                                    setState(() {
+                                      _selectedMapLocation = pickedLocation;
+                                    });
+                                    await _getAddressFromLatLng(_selectedMapLocation!);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                 ),
               ),
@@ -453,12 +519,11 @@ class _LahanTambahPageState extends State<LahanTambahPage> {
               ),
               const SizedBox(height: 20),
 
-              // Tombol Simpan
               SizedBox(
                 width: double.infinity,
                 height: 45,
                 child: ElevatedButton(
-                  onPressed: submitForm, // Memanggil fungsi submitForm
+                  onPressed: submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2EC83D),
                     shape: RoundedRectangleBorder(
