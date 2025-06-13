@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'home_page.dart';
+import 'package:agricare/pages/home_page.dart';
 
 class JadwalTanamPage extends StatefulWidget {
   @override

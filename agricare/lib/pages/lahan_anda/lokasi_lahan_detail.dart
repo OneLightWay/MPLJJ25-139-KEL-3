@@ -587,7 +587,7 @@ class _LahanDetailPageState extends State<LahanDetailPage> {
                                   ],
                                 ),
                                 onTap: () {
-                                  if (tanamId != null) {
+                                  if (tanamId != ' ') {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(

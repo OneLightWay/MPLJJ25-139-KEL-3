@@ -1,7 +1,7 @@
-import 'package:agricare/pages/lokasi_lahan.dart';
+import 'package:agricare/pages/lahan_anda/lokasi_lahan.dart';
 import 'package:flutter/material.dart';
-import 'package:agricare/pages/cuaca_page.dart';
-import 'package:agricare/pages/jadwal_kalendar.dart';
+import 'package:agricare/pages/cuaca/cuaca_page.dart';
+import 'package:agricare/pages/jadwal/jadwal_kalendar.dart';
 
 class DashboardMenu extends StatelessWidget {
   const DashboardMenu({super.key});
