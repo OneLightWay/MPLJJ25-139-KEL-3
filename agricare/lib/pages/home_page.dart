@@ -24,6 +24,7 @@ class _HomePageState extends State<HomePage> {
           _selectedIndex = 1;
         });
       }),
+      // const BotChatPage(),
       const DashboardPage(),
       // Center(child: Text('Scan')),
       // Center(child: Text('Terdekat')),

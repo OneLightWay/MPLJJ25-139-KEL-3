@@ -17,13 +17,17 @@ class Footer extends StatelessWidget {
       unselectedItemColor: Colors.grey[600],
       showUnselectedLabels: true,
       items: const [
-        BottomNavigationBarItem(
-          icon: FaIcon(FontAwesomeIcons.newspaper),
-          label: 'Artikel',
-        ),
+        // BottomNavigationBarItem(
+        //   icon: FaIcon(FontAwesomeIcons.newspaper),
+        //   label: 'Artikel',
+        // ),
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Beranda',
+        ),
+        BottomNavigationBarItem(
+          icon: FaIcon(FontAwesomeIcons.robot),
+          label: 'ChatBot',
         ),
         // BottomNavigationBarItem(
         //   icon: Icon(Icons.camera_alt),
