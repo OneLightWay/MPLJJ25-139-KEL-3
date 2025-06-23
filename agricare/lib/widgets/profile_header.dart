@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:agricare/pages/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:agricare/pages/profile_page.dart'; // Pastikan ini diimpor dengan benar
 
 class ProfileHeader extends StatefulWidget {
   const ProfileHeader({super.key});
@@ -43,6 +44,14 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  }
+
+  // Fungsi baru untuk navigasi ke ProfilePage
+  void _navigateToProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
     );
   }
 
@@ -112,8 +121,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                   ),
                 ],
               ),
+              // --- Perbaikan di sini ---
               GestureDetector(
-                onTap: () => _navigateToHome(context),
+                onTap: () { // Ganti 'onPressed' menjadi 'onTap'
+                  _navigateToProfile(context); // Panggil fungsi navigasi yang sudah dibuat
+                },
                 child: Container(
                   width: 55,
                   height: 55,

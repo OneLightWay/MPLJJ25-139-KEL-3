@@ -494,18 +494,18 @@ class _DetailTanamPageState extends State<DetailTanamPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    print("Data AUT clicked!");
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.yellow[700],
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Data AUT'),
-                                ),
-                              ),
+                              // Expanded(
+                              //   child: ElevatedButton(
+                              //     onPressed: () {
+                              //       print("Data AUT clicked!");
+                              //     },
+                              //     style: ElevatedButton.styleFrom(
+                              //       backgroundColor: Colors.yellow[700],
+                              //       foregroundColor: Colors.white,
+                              //     ),
+                              //     child: const Text('Data AUT'),
+                              //   ),
+                              // ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: ElevatedButton(

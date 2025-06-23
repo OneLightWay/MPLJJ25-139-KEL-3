@@ -3,6 +3,7 @@ import '../widgets/footer.dart';
 import 'dashboard_page.dart';
 import 'artikel_page.dart';
 import 'profile_page.dart';
+import 'chatbot_page.dart';
 // import 'explore_page.dart';
 // import 'scan_page.dart';
 // import 'profile_page.dart';
@@ -15,17 +16,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
 
   List<Widget> _buildPages() { 
     return[
+      const DashboardPage(),
       ArtikelPage(onBack: () {
         setState(() {
           _selectedIndex = 1;
         });
       }),
-      // const BotChatPage(),
-      const DashboardPage(),
+      const ChatbotPage(),
       // Center(child: Text('Scan')),
       // Center(child: Text('Terdekat')),
       const ProfilePage(),

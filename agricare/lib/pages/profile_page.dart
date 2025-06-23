@@ -210,13 +210,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Color(0xFF2ABA66),
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            "Poin : $poin",
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF2ABA66),
-                            ),
-                          ),
+                          // Text(
+                          //   "Poin : $poin",
+                          //   style: const TextStyle(
+                          //     fontSize: 12,
+                          //     color: Color(0xFF2ABA66),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
